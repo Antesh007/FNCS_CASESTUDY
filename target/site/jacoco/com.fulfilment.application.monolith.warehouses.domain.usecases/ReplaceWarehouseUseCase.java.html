@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReplaceWarehouseUseCase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">java-code-assignment</a> &gt; <a href="index.source.html" class="el_package">com.fulfilment.application.monolith.warehouses.domain.usecases</a> &gt; <span class="el_source">ReplaceWarehouseUseCase.java</span></div><h1>ReplaceWarehouseUseCase.java</h1><pre class="source lang-java linenums">package com.fulfilment.application.monolith.warehouses.domain.usecases;
+
+import com.fulfilment.application.monolith.warehouses.domain.models.Warehouse;
+import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
+import com.fulfilment.application.monolith.warehouses.domain.ports.ReplaceWarehouseOperation;
+import com.fulfilment.application.monolith.warehouses.domain.ports.WarehouseStore;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
+
+@ApplicationScoped
+public class ReplaceWarehouseUseCase implements ReplaceWarehouseOperation {
+
+  private final WarehouseStore warehouseStore;
+  private final LocationResolver locationResolver;
+  
+  @Inject
+  public ReplaceWarehouseUseCase(
+          WarehouseStore warehouseStore,
+<span class="fc" id="L20">          LocationResolver locationResolver) {</span>
+
+<span class="fc" id="L22">      this.warehouseStore = warehouseStore;</span>
+<span class="fc" id="L23">      this.locationResolver = locationResolver;</span>
+<span class="fc" id="L24">  }</span>
+
+  @Override
+  public void replace(Warehouse newWarehouse) {
+	  
+	// Find the existing warehouse to be replaced
+<span class="fc" id="L30">	    var existingWarehouse = warehouseStore.findByBusinessUnitCode(newWarehouse.businessUnitCode);</span>
+	    
+<span class="fc bfc" id="L32" title="All 2 branches covered.">	    if (existingWarehouse == null) {</span>
+<span class="fc" id="L33">	      throw new WebApplicationException(</span>
+	          &quot;Warehouse with business unit code '&quot; + newWarehouse.businessUnitCode + &quot;' not found.&quot;, 
+	          404);
+	    }
+
+	    // Validation 1: Stock Matching - new warehouse must have same stock as old one
+<span class="fc bfc" id="L39" title="All 2 branches covered.">	    if (!existingWarehouse.stock.equals(newWarehouse.stock)) {</span>
+<span class="fc" id="L40">	      throw new WebApplicationException(</span>
+	          &quot;Stock of new warehouse (&quot; + newWarehouse.stock + &quot;) must match the stock of the warehouse being replaced (&quot; 
+	          + existingWarehouse.stock + &quot;).&quot;, 
+	          422);
+	    }
+
+	    // Validation 2: Capacity Accommodation - new warehouse capacity must accommodate existing stock
+<span class="fc bfc" id="L47" title="All 2 branches covered.">	    if (newWarehouse.capacity &lt; existingWarehouse.stock) {</span>
+<span class="fc" id="L48">	      throw new WebApplicationException(</span>
+	          &quot;New warehouse capacity (&quot; + newWarehouse.capacity + &quot;) cannot accommodate existing stock (&quot; 
+	          + existingWarehouse.stock + &quot;).&quot;, 
+	          422);
+	    }
+
+	    // Validation 3: Location must be valid
+<span class="fc" id="L55">	    var location = locationResolver.resolveByIdentifier(newWarehouse.location);</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">	    if (location == null) {</span>
+<span class="fc" id="L57">	      throw new WebApplicationException(</span>
+	          &quot;Location '&quot; + newWarehouse.location + &quot;' does not exist.&quot;, 
+	          422);
+	    }
+
+	    // Validation 4: Total capacity check at location (excluding current warehouse)
+<span class="fc" id="L63">	    int totalCapacityAtLocation = warehouseStore.getAll().stream()</span>
+<span class="pc bpc" id="L64" title="2 of 4 branches missed.">	        .filter(w -&gt; w.location.equals(newWarehouse.location) </span>
+	            &amp;&amp; w.archivedAt == null 
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">	            &amp;&amp; !w.businessUnitCode.equals(newWarehouse.businessUnitCode))</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">	        .mapToInt(w -&gt; w.capacity != null ? w.capacity : 0)</span>
+<span class="fc" id="L68">	        .sum();</span>
+	    
+<span class="fc bfc" id="L70" title="All 2 branches covered.">	    if (totalCapacityAtLocation + newWarehouse.capacity &gt; location.maxCapacity) {</span>
+<span class="fc" id="L71">	      throw new WebApplicationException(</span>
+	          &quot;Warehouse capacity exceeds maximum total capacity for location '&quot; + newWarehouse.location 
+	          + &quot;'. Available capacity: &quot; + (location.maxCapacity - totalCapacityAtLocation) + &quot;.&quot;, 
+	          422);
+	    }
+
+	    // Update the warehouse
+<span class="fc" id="L78">	    newWarehouse.createdAt = existingWarehouse.createdAt; // Preserve creation time</span>
+<span class="fc" id="L79">	    warehouseStore.update(newWarehouse);</span>
+<span class="fc" id="L80">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
