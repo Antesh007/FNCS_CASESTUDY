@@ -1,4 +1,4 @@
-package com.fulfilment.application.monolith.location;
+package com.fulfilment.application.monolith.fulfilment.location;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

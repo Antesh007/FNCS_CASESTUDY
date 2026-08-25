@@ -1,10 +1,10 @@
-package com.fulfilment.application.monolith.event;
+package com.fulfilment.application.monolith.fulfilment.event;
 
 import com.fulfilment.application.monolith.stores.Store;
 
 public class StoreUpdatedEvent {
-	
-	private final Store store;
+
+    private final Store store;
 
     public StoreUpdatedEvent(Store store) {
         this.store = store;

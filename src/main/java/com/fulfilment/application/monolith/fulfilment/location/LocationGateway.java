@@ -1,4 +1,4 @@
-package com.fulfilment.application.monolith.location;
+package com.fulfilment.application.monolith.fulfilment.location;
 
 import com.fulfilment.application.monolith.warehouses.domain.models.Location;
 import com.fulfilment.application.monolith.warehouses.domain.ports.LocationResolver;
@@ -26,10 +26,9 @@ public class LocationGateway implements LocationResolver {
 
   @Override
   public Location resolveByIdentifier(String identifier) {
-    // TODO implement this method
-	  return locations.stream()
-		        .filter(location -> location.identification.equals(identifier))
-		        .findFirst()
-		        .orElse(null);
+    return locations.stream()
+        .filter(location -> location.identification.equals(identifier))
+        .findFirst()
+        .orElse(null);
   }
 }
